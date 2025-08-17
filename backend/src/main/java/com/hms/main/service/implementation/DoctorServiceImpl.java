@@ -5,9 +5,11 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.hms.main.dto.request.CreateDoctorRequest;
@@ -43,38 +45,60 @@ public class DoctorServiceImpl implements DoctorService {
         this.doctorRepository = doctorRepository;
     }
 
+    private final PasswordEncoder passwordEncoder;
+
     @Transactional(rollbackOn = Exception.class)
     public DoctorResponse createDoctor(CreateDoctorRequest request) {
-       try {
-           
-           validateCreateDoctorRequest(request);
-           
-           User user = userRepository.save(request.getUser());
+        try {
+            // 1. Validate input (custom method if you want extra checks)
+            validateCreateDoctorRequest(request);
 
-           if(user != null){
-            Doctor doctor = doctorRepository.save({
-                user: user,
-                other fields
-            })
-           }else{
-            throw exception
-           }
+            User user = new User();
+            user.setFullName(request.getUser().getFullName());
+            user.setEmail(request.getUser().getEmail());
+            user.setPhoneNumber(request.getUser().getPhoneNumber());
+            user.setGender(request.getUser().getGender());
+            user.setDateOfBirth(request.getUser().getDateOfBirth());
+            user.setAddress(request.getUser().getAddress());
+            user.setEmergencyContactName(request.getUser().getEmergencyContactName());
+            user.setEmergencyContactPhone(request.getUser().getEmergencyContactPhone());
+            user.setPassword(passwordEncoder.encode(request.getUser().getPassword()));
 
-           if(docotr != null){
-            List<DoctorSchedule> schedule = new List<>();
-            
-           }
+            user = userRepository.save(user);
 
+            Doctor doctor = new Doctor();
+            doctor.setUser(user);
+            doctor.setSpeciality(request.getSpeciality());
+            doctor.setLicenseNumber(request.getLicenseNumber());
+            doctor.setYearsOfExperience(request.getYearsOfExperience());
 
-           
-           return "";
+            doctor = doctorRepository.save(doctor);
 
-       } catch (Exception e) {
-           throw new Exception("Failed to create doctor");
-       }
-   }
-   
-   void validateCreateDoctorRequest(CreateDoctorRequest request) {
+            if (request.getSchedules() != null && !request.getSchedules().isEmpty()) {
+                List<DoctorSchedule> schedules = request.getSchedules().stream()
+                        .map(s -> DoctorSchedule.builder()
+                                .doctor(doctor)
+                                .dayOfWeek(s.getDayOfWeek())
+                                .startTime(s.getStartTime())
+                                .endTime(s.getEndTime())
+                                .isActive(s.getIsActive())
+                                .build())
+                        .collect(Collectors.toList());
+
+                doctorScheduleRepository.saveAll(schedules);
+                doctor.setSchedules(schedules);
+            }
+
+            return DoctorMapper.toResponse(doctor);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create doctor", e);
+        }
+    }
+
+}
+
+    void validateCreateDoctorRequest(CreateDoctorRequest request) {
         if (request.getUser() == null) {
             throw new ValidationException("User information is required");
         }
@@ -89,4 +113,3 @@ public class DoctorServiceImpl implements DoctorService {
         }
     }
 }
-
