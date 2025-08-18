@@ -1,17 +1,18 @@
 package com.hms.main.dto.request;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+
 import lombok.Data;
 
 @Data
 public class ScheduleRequest {
-    
-    private String dayOfWeek;
-    
-    private Boolean isActive;
-    
-    private String startTime;
-    
-    private String endTime;
 
-    private String dayOfWeekName;
+    private DayOfWeek dayOfWeekName;
+    
+    private LocalTime startTime;
+    
+    private LocalTime endTime;
+
+    private Boolean isActive;
 }

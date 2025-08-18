@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.hms.main.entity.DoctorSchedule;
 
 
-public interface ScheduleRepository extends JpaRepository<DoctorSchedule, UUID>{
+public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, UUID>{
     
 }

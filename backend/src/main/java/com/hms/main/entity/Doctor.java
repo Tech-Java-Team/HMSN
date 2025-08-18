@@ -32,8 +32,8 @@ public class Doctor {
     private User user;
 
     @Column(nullable = false)
-    @NotBlank(message = "Speciality is required")
-    private String speciality;
+    @NotBlank(message = "Specialty is required")
+    private String specialty;
 
     @Column(name = "license_number", nullable = false, unique = true)
     @NotBlank(message = "License number is required")

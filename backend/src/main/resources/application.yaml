@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update # Set schema when app run (for dev change depending on your need)
+      ddl-auto: create-drop # Set schema when app run (for dev change depending on your need)
     show-sql: true
     properties:
       hibernate:

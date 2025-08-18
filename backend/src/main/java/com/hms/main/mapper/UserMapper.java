@@ -6,7 +6,6 @@ import com.hms.main.dto.request.user.UpdateUserRequest;
 import com.hms.main.dto.response.user.UserResponse;
 import com.hms.main.entity.User;
 import com.hms.main.entity.enums.Gender;
-import com.hms.main.entity.enums.Roles;
 
 public class UserMapper {
 
@@ -44,7 +43,6 @@ public class UserMapper {
                 .dateOfBirth(request.getDateOfBirth())
                 .emergencyContactName(request.getEmergencyContactName())
                 .emergencyContactPhone(request.getEmergencyContactPhone())
-                .role(request.getRole() != null ? request.getRole() : Roles.PATIENT)
                 .build();
     }
 

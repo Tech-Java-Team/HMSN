@@ -53,17 +53,17 @@ const initialNewDoctorState = {
 
     // Doctor fields
     specialty: '',
-    license_number: '',
-    years_of_experience: 0,
+    licenseNumber: '',
+    yearsOfExperience: 0,
 
     // Schedules
     schedules: [
         {
-            day_of_week: 1,
-            day_of_week_name: 'Monday',
-            start_time: '09:00',
-            end_time: '17:00',
-            is_active: true
+            dayOfWeek: 1,
+            dayOfWeekName: 'Monday',
+            startTime: '09:00',
+            endTime: '17:00',
+            isActive: true
         }
     ]
 };
@@ -71,13 +71,13 @@ const initialNewDoctorState = {
 const newDoctor = ref({ ...initialNewDoctorState });
 
 const daysOfWeek = ref([
-    { label: 'Sunday', value: 0 },
-    { label: 'Monday', value: 1 },
-    { label: 'Tuesday', value: 2 },
-    { label: 'Wednesday', value: 3 },
-    { label: 'Thursday', value: 4 },
-    { label: 'Friday', value: 5 },
-    { label: 'Saturday', value: 6 }
+    { label: 'Sunday', value: 0, name: 'SUNDAY' },
+    { label: 'Monday', value: 1, name: 'MONDAY' },
+    { label: 'Tuesday', value: 2, name: 'TUESDAY' },
+    { label: 'Wednesday', value: 3, name: 'WEDNESDAY' },
+    { label: 'Thursday', value: 4, name: 'THURSDAY' },
+    { label: 'Friday', value: 5, name: 'FRIDAY' },
+    { label: 'Saturday', value: 6, name: 'SATURDAY' }
 ]);
 
 const genderOptions = ref([
@@ -95,7 +95,7 @@ const schema = computed(() => {
         fullName: yup.string().required().min(3).max(255).label('Full Name'),
         email: yup.string().required().email().max(255).label('Email Address'),
         phoneNumber: yup.string().min(8).required().label('Phone Number'),
-        gender: yup.string().required().oneOf(['male', 'female', 'other']).label('Gender'),
+        gender: yup.string().required().oneOf(['MALE', 'FEMALE', 'OTHER']).label('Gender'),
         dateOfBirth: yup.date().required().max(new Date(), 'Date of birth must be before today').label('Date of Birth'),
         address: yup.string().max(500).label('Address'),
         emergencyContactName: yup.string().max(255).label('Emergency Contact Name'),
@@ -103,8 +103,8 @@ const schema = computed(() => {
 
         // Doctor fields
         specialty: yup.string().required().max(255).label('Specialty'),
-        license_number: yup.string().required().max(255).label('License Number'),
-        years_of_experience: yup.number().required().min(0).max(50).label('Years of Experience'),
+        licenseNumber: yup.string().required().max(255).label('License Number'),
+        yearsOfExperience: yup.number().required().min(0).max(50).label('Years of Experience'),
     };
 
     if (!editingDoctor.value) {
@@ -175,7 +175,8 @@ const saveDoctor = async (values) => {
         // Convert schedules to match backend expectations
         const schedulesWithDayOfWeek = newDoctor.value.schedules.map(schedule => ({
             ...schedule,
-            day_of_week: schedule.day_of_week
+            dayOfWeek: schedule.dayOfWeek,
+            dayOfWeekName: daysOfWeek.value.find(d => d.value === schedule.dayOfWeek)?.name || '',
         }));
 
         const payload = {
@@ -211,7 +212,7 @@ const saveDoctor = async (values) => {
 
 const deleteDoctor = async (doctor) => {
     try {
-        await axios.delete(`/api/doctors/${doctor.id}`);
+        await axios.delete(`/api/v1/doctors/${doctor.id}`);
         doctors.value = doctors.value.filter(d => d.id !== doctor.id);
     } catch (error) {
         if (error.response && error.response.status === 409) {
@@ -248,15 +249,15 @@ const openEditDialog = (doctorToEdit) => {
 
         // Doctor fields
         specialty: doctorDataCopy.specialty,
-        license_number: doctorDataCopy.license_number || '',
-        years_of_experience: doctorDataCopy.years_of_experience || 0,
+        licenseNumber: doctorDataCopy.licenseNumber || '',
+        yearsOfExperience: doctorDataCopy.yearsOfExperience || 0,
 
         // Schedules
         schedules: doctorDataCopy.schedules ? doctorDataCopy.schedules.map(schedule => ({
             ...schedule,
-            day_of_week: schedule.day_of_week,
-            day_of_week_name: daysOfWeek.value.find(d => d.value === schedule.day_of_week)?.label || '',
-            is_active: schedule.is_active !== undefined ? schedule.is_active : true
+            dayOfWeek: schedule.dayOfWeek,
+            dayOfWeekName: daysOfWeek.value.find(d => d.value === schedule.dayOfWeek)?.name || '',
+            isActive: schedule.isActive !== undefined ? schedule.isActive : true
         })) : []
     };
     isDoctorDialogVisible.value = true;
@@ -286,11 +287,11 @@ const addScheduleRow = () => {
         newDoctor.value.schedules = [];
     }
     newDoctor.value.schedules.push({
-        day_of_week: 1,
-        day_of_week_name: 'Monday',
-        start_time: '09:00',
-        end_time: '17:00',
-        is_active: true
+        dayOfWeek: 1,
+        dayOfWeekName: 'Monday',
+        startTime: '09:00',
+        endTime: '17:00',
+        isActive: true
     });
 };
 
@@ -298,11 +299,11 @@ const removeScheduleRow = (index) => {
     newDoctor.value.schedules.splice(index, 1);
 };
 
-// Update day_of_week_name when day_of_week changes
+// Update dayOfWeekName when dayOfWeek changes
 const updateDayOfWeekName = (schedule) => {
-    const day = daysOfWeek.value.find(d => d.value === schedule.day_of_week);
+    const day = daysOfWeek.value.find(d => d.value === schedule.dayOfWeek);
     if (day) {
-        schedule.day_of_week_name = day.label;
+        schedule.dayOfWeekName = day.label;
     }
 };
 
@@ -449,8 +450,8 @@ onMounted(() => {
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <p class="font-semibold text-gray-900">{{ slotProps.data.user.fullName }}</p>
-                                        <p class="text-sm text-gray-500">{{ slotProps.data.license_number || 'License: N/A' }}</p>
-                                        <p class="text-xs text-gray-400">{{ slotProps.data.years_of_experience }} years
+                                        <p class="text-sm text-gray-500">{{ slotProps.data.licenseNumber || 'License: N/A' }}</p>
+                                        <p class="text-xs text-gray-400">{{ slotProps.data.yearsOfExperience }} years
                                             experience</p>
                                     </div>
                                 </div>
@@ -505,13 +506,13 @@ onMounted(() => {
                                         class="flex items-center space-x-2 text-sm">
                                         <i class="pi pi-calendar text-gray-400 text-xs" aria-hidden="true"></i>
                                         <span class="w-12 text-gray-600 font-medium">
-                                            {{daysOfWeek.find(d => d.value === schedule.day_of_week)?.label.slice(0, 3)
+                                            {{daysOfWeek.find(d => d.value === schedule.dayOfWeek)?.label.slice(0, 3)
                                             || 'N/A' }}:
                                         </span>
-                                        <span class="text-gray-900">{{ schedule.start_time }} - {{ schedule.end_time
+                                        <span class="text-gray-900">{{ schedule.startTime }} - {{ schedule.endTime
                                             }}</span>
-                                        <i v-if="schedule.is_active !== undefined"
-                                            :class="schedule.is_active ? 'pi pi-check-circle text-green-600' : 'pi pi-times-circle text-red-600'"
+                                        <i v-if="schedule.isActive !== undefined"
+                                            :class="schedule.isActive ? 'pi pi-check-circle text-green-600' : 'pi pi-times-circle text-red-600'"
                                             class="text-xs" aria-hidden="true"></i>
                                     </div>
                                     <div v-if="slotProps.data.schedules.length > 2"
@@ -743,31 +744,31 @@ onMounted(() => {
                                 </div>
 
                                 <div class="flex flex-col gap-2">
-                                    <label for="license_number" class="font-semibold text-gray-700">License Number
+                                    <label for="licenseNumber" class="font-semibold text-gray-700">License Number
                                         *</label>
-                                    <Field name="license_number" v-slot="{ field, errors }">
-                                        <InputText id="license_number" v-bind="field"
+                                    <Field name="licenseNumber" v-slot="{ field, errors }">
+                                        <InputText id="licenseNumber" v-bind="field"
                                             :class="{ 'p-invalid': errors.length > 0 }"
                                             placeholder="Medical license number" class="w-full"
-                                            aria-describedby="license_number-error" />
+                                            aria-describedby="licenseNumber-error" />
                                     </Field>
-                                    <ErrorMessage name="license_number" class="text-red-500 text-sm"
-                                        id="license_number-error" role="alert" />
+                                    <ErrorMessage name="licenseNumber" class="text-red-500 text-sm"
+                                        id="licenseNumber-error" role="alert" />
                                 </div>
 
                                 <div class="flex flex-col gap-2">
-                                    <label for="years_of_experience" class="font-semibold text-gray-700">Years of
+                                    <label for="yearsOfExperience" class="font-semibold text-gray-700">Years of
                                         Experience
                                         *</label>
-                                    <Field name="years_of_experience" v-slot="{ value, handleChange, errors }">
-                                        <InputNumber id="years_of_experience" :modelValue="value" @update:modelValue="handleChange"
+                                    <Field name="yearsOfExperience" v-slot="{ value, handleChange, errors }">
+                                        <InputNumber id="yearsOfExperience" :modelValue="value" @update:modelValue="handleChange"
                                             :class="{ 'p-invalid': errors.length > 0 }"
                                             placeholder="Years of experience" class="w-full" :min="0" :max="50"
                                             :showButtons="true" buttonLayout="horizontal" :step="1"
-                                            aria-describedby="years_of_experience-error" />
+                                            aria-describedby="yearsOfExperience-error" />
                                     </Field>
-                                    <ErrorMessage name="years_of_experience" class="text-red-500 text-sm"
-                                        id="years_of_experience-error" role="alert" />
+                                    <ErrorMessage name="yearsOfExperience" class="text-red-500 text-sm"
+                                        id="yearsOfExperience-error" role="alert" />
                                 </div>
                             </div>
                         </div>
@@ -790,24 +791,24 @@ onMounted(() => {
                                                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
                                                 <div class="lg:col-span-4 flex flex-col gap-2">
                                                     <label class="text-sm font-medium text-gray-600">Day of Week</label>
-                                                    <Select v-model="schedule.day_of_week" :options="daysOfWeek"
+                                                    <Select v-model="schedule.dayOfWeek" :options="daysOfWeek"
                                                         optionLabel="label" optionValue="value" placeholder="Select day"
                                                         class="w-full" @change="updateDayOfWeekName(schedule)" />
                                                 </div>
                                                 <div class="lg:col-span-3 flex flex-col gap-2">
                                                     <label class="text-sm font-medium text-gray-600">Start Time</label>
-                                                    <InputMask v-model="schedule.start_time" mask="99:99"
+                                                    <InputMask v-model="schedule.startTime" mask="99:99"
                                                         placeholder="09:00" class="w-full" />
                                                 </div>
                                                 <div class="lg:col-span-3 flex flex-col gap-2">
                                                     <label class="text-sm font-medium text-gray-600">End Time</label>
-                                                    <InputMask v-model="schedule.end_time" mask="99:99"
+                                                    <InputMask v-model="schedule.endTime" mask="99:99"
                                                         placeholder="17:00" class="w-full" />
                                                 </div>
                                                 <div class="lg:col-span-2 flex justify-end">
                                                     <Button icon="pi pi-trash" severity="danger" text rounded
                                                         @click="removeScheduleRow(index)" class="hover:bg-red-50"
-                                                        :aria-label="`Remove schedule for ${schedule.day_of_week_name}`"
+                                                        :aria-label="`Remove schedule for ${schedule.dayOfWeekName}`"
                                                         v-tooltip.top="'Remove this schedule'" />
                                                 </div>
                                             </div>
@@ -815,21 +816,21 @@ onMounted(() => {
                                             <!-- Schedule Status Toggle Row -->
                                             <div class="pt-2 border-t border-gray-100">
                                                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                                    <ToggleSwitch v-model="schedule.is_active"
+                                                    <ToggleSwitch v-model="schedule.isActive"
                                                         :inputId="`schedule-active-toggle-${index}`"
                                                         :aria-describedby="`schedule-active-help-${index}`" />
                                                     <div class="flex-1">
                                                         <label :for="`schedule-active-toggle-${index}`"
                                                             class="font-medium text-gray-900 cursor-pointer">
-                                                            {{ schedule.is_active ? 'Active' : 'Inactive' }}
+                                                            {{ schedule.isActive ? 'Active' : 'Inactive' }}
                                                         </label>
                                                         <p :id="`schedule-active-help-${index}`"
                                                             class="text-sm text-gray-600 mt-1">
-                                                            {{ schedule.is_active ? 'This schedule is available for appointments' : 'This schedule is disabled' }}
+                                                            {{ schedule.isActive ? 'This schedule is available for appointments' : 'This schedule is disabled' }}
                                                         </p>
                                                     </div>
                                                     <div class="flex items-center gap-2">
-                                                        <i :class="schedule.is_active ? 'pi pi-check-circle text-green-600' : 'pi pi-times-circle text-red-600'"
+                                                        <i :class="schedule.isActive ? 'pi pi-check-circle text-green-600' : 'pi pi-times-circle text-red-600'"
                                                             aria-hidden="true"></i>
                                                     </div>
                                                 </div>
